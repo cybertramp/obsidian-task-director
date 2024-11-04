@@ -310,46 +310,15 @@ class TodoCountsModal extends Modal {
 		// add table
 		const table = contentEl.createEl("table", { cls: "todo-stats-table" });
 
-		// add style
+		// add modal class
 		contentEl.addClass("todo-stats-modal");
-		contentEl.createEl("style", {
-			text: `
-                .todo-stats-modal {
-                    padding: 1em;
-                }
-                .todo-stats-filename {
-                    color: var(--text-muted);
-                    margin-bottom: 1em;
-                }
-                .todo-stats-table {
-                    width: 100%;
-                    border-collapse: collapse;
-                }
-                .todo-stats-table td {
-                    padding: 8px;
-                    border: 1px solid var(--background-modifier-border);
-                }
-                .todo-stats-table td:first-child {
-                    font-weight: bold;
-                    background-color: var(--background-modifier-hover);
-                }
-                .todo-stats-table td:last-child {
-                    text-align: right;
-                }
-                .completion-rate {
-                    color: var(--text-accent);
-                    font-weight: bold;
-                    margin-top: 1em;
-                }
-            `,
-		});
 
 		// add data in table
 		this.addTableRow(table, "Total Tasks", this.totalTodos);
 		this.addTableRow(table, "Completed", this.completeTodos);
 		this.addTableRow(table, "Incomplete", this.incompleteTodos);
 
-		// precentage
+		// percentage
 		const completionRate =
 			this.totalTodos > 0
 				? ((this.completeTodos / this.totalTodos) * 100).toFixed(1)
