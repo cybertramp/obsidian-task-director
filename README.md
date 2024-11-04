@@ -35,11 +35,11 @@ Click right and select menu item or call command
 
 The image below shows the functionality of changing tasks on a page all at once.
 
-![](https://i.ibb.co/2htxMML/director-change-to-done2.gif)
+![](./.assets/director-change_to_done2.gif)
 
 The image below shows the functionality being used through a command.
 
-![](https://i.ibb.co/wwRW1Hm/director-change-to-done1.gif)
+![](./.assets/director-change_to_done1.gif)
 
 ## Why Task Director
 
