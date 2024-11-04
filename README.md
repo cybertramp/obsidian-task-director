@@ -1,96 +1,81 @@
-# Obsidian Sample Plugin
+# Obsidian Task Director
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+Change all tasks within the selected page at once.
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+Page에 있는 Task를 한번에 전환하세요. ⬜ --> ✅
 
-**Note:** The Obsidian API is still in early alpha and is subject to change at any time!
+## Features
+- Changes all incomplete tasks (`- [ ]`) in the selected file to complete (`- [x]`).
+  - [command] Change tasks to done
+  - [select target file menu] Todo->Done
+- Changes all complete tasks (`- [x]`) in the selected file to incomplete (`- [ ]`).
+  - [command] change tasks to todo
+  - [select target file menu] Done->Todo
+- **Show Total Summary count in page**
+  - [command] Show page todo summary
+  - [select target file menu] Todo Summary
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+- **Remove task date from completed tasks**: This option allows you to remove the task date (e.g., ✅ 2024-11-04) when toggling completed tasks to incomplete. 
+  - **Default setting**: Enabled
 
-## First time developing plugins?
-
-Quick starting guide for new plugin devs:
-
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
-
-## Releasing new releases
-
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
-
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
-
-## Adding your plugin to the community plugin list
-
-- Check the [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+## Installation
+1. Copy this plugin’s folder to your Obsidian plugins folder (`.obsidian/plugins`).
+2. In Obsidian, go to **Settings > Community plugins**, and enable this plugin.
 
 ## How to use
 
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
+Click right and select menu item or call command
 
-## Manually installing the plugin
 
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
+![](https://i.ibb.co/4jwCvqJ/3345.png)
 
-## Improve code quality with eslint (optional)
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- To use eslint with this project, make sure to install eslint from terminal:
-  - `npm install -g eslint`
-- To use eslint to analyze this project use this command:
-  - `eslint main.ts`
-  - eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder:
-  - `eslint .\src\`
 
-## Funding URL
+![](https://i.ibb.co/C15V1zn/3346.png)
 
-You can include funding URLs where people who use your plugin can financially support it.
 
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
+The image below shows the functionality of changing tasks on a page all at once.
 
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
+![](https://i.ibb.co/2htxMML/director-change-to-done2.gif)
+
+The image below shows the functionality being used through a command.
+
+![](https://i.ibb.co/wwRW1Hm/director-change-to-done1.gif)
+
+## Why Task Director
+
+I developed this plugin to address the challenge of managing incomplete tasks from past entries. Without this tool, 
+historical uncompleted tasks would clutter task statistics and new pages, and the only solution was to manually process each task one by one.
+
+> 지나간 Task들을 다 Done 처리 못했는데 새로운 페이지에서 통계를 내거나 하는 경우 이전에 Done 처리 못한 항목들이 모두 보이게되어 아무리 검색해도 이와 같은 기능을 하려면 일일이 모두 touch 해야한다는 말 밖에 없어서 그냥 만들었습니다.
+
+
+## Build for dev
+
+```sh
+git clone https://github.com/cybertramp/obsidian-task-director
+cd obsidian-task-director
+yarn install
+yarn dev
+
+# Test in yout obsidian
+# Copy files to yout Vault .obsidian directory
+# main.js, manifest.json, styles.css
 ```
 
-If you have multiple URLs, you can also do:
+## Support
 
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
-    }
-}
-```
+(cybertramp) paran_son@outlook.com
 
-## API Documentation
+<a href="https://www.buymeacoffee.com/cybertramp"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=cybertramp&button_colour=FFDD00&font_colour=000000&font_family=Bree&outline_colour=000000&coffee_colour=ffffff" /></a>
 
-See https://github.com/obsidianmd/obsidian-api
+
+## History
+
+### Next
+- [ ] Add Show Summary - vault or directory task counts
+- [ ] Change to Task to bullet item
+
+### version 0.0.1(2024.11.04)
+- **[update]** 
+  - incomplete -> complete, complete -> incomplete features
+  - TODO Summary feature

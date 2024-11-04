@@ -1,15 +1,15 @@
 {
-	"name": "obsidian-sample-plugin",
-	"version": "1.0.0",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"name": "obsidian-task-director",
+	"version": "0.0.1",
+	"description": "Manage and Change Tasks Targeting a Specific Page",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"version": "node version-bump.mjs && git add manifest.json versions.json"
 	},
-	"keywords": [],
-	"author": "",
+	"keywords": ["obsidian", "todo", "task", "director"],
+	"author": "cybertramp",
 	"license": "MIT",
 	"devDependencies": {
 		"@types/node": "^16.11.6",

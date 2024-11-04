@@ -1,134 +1,374 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import {
+	App,
+	Plugin,
+	TFile,
+	Notice,
+	Setting,
+	PluginSettingTab,
+	Modal,
+} from "obsidian";
 
-// Remember to rename these classes and interfaces!
-
-interface MyPluginSettings {
-	mySetting: string;
+interface BatchTaskTogglePluginSettings {
+	removeCompletedDate: boolean;
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
-}
+const DEFAULT_SETTINGS: BatchTaskTogglePluginSettings = {
+	removeCompletedDate: true,
+};
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+export default class BatchTaskTogglePlugin extends Plugin {
+	settings: BatchTaskTogglePluginSettings;
 
 	async onload() {
 		await this.loadSettings();
+		console.log("Batch Task Toggle plugin loaded");
 
-		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
-		});
-		// Perform additional things with the ribbon
-		ribbonIconEl.addClass('my-plugin-ribbon-class');
+		// add setting UI
+		this.addSettingTab(
+			new BatchTaskTogglePluginSettingsTab(this.app, this)
+		);
 
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status Bar Text');
-
-		// This adds a simple command that can be triggered anywhere
+		// add command
 		this.addCommand({
-			id: 'open-sample-modal-simple',
-			name: 'Open sample modal (simple)',
-			callback: () => {
-				new SampleModal(this.app).open();
-			}
+			id: "change-to-done",
+			name: "Change tasks to done",
+			callback: () => this.toggleTasksInCurrentFile(true),
 		});
-		// This adds an editor command that can perform some operation on the current editor instance
-		this.addCommand({
-			id: 'sample-editor-command',
-			name: 'Sample editor command',
-			editorCallback: (editor: Editor, view: MarkdownView) => {
-				console.log(editor.getSelection());
-				editor.replaceSelection('Sample Editor Command');
-			}
-		});
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
-		this.addCommand({
-			id: 'open-sample-modal-complex',
-			name: 'Open sample modal (complex)',
-			checkCallback: (checking: boolean) => {
-				// Conditions to check
-				const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (markdownView) {
-					// If checking is true, we're simply "checking" if the command can be run.
-					// If checking is false, then we want to actually perform the operation.
-					if (!checking) {
-						new SampleModal(this.app).open();
-					}
 
-					// This command will only show up in Command Palette when the check function returns true
-					return true;
+		// add command
+		this.addCommand({
+			id: "change-to-not-done",
+			name: "Change tasks to todo",
+			callback: () => this.toggleTasksInCurrentFile(false),
+		});
+
+		// add command
+		this.addCommand({
+			id: "show-todo-summary",
+			name: "Show page todo summary",
+			callback: () => this.showTodoCountsInCurrentFile(),
+		});
+
+		// add right click menu command
+		this.registerEvent(
+			this.app.workspace.on("file-menu", (menu, file) => {
+				if (file instanceof TFile && file.extension === "md") {
+					// Feature: Incomplete -> Complete
+					menu.addItem((item) => {
+						item.setTitle("Todo -> Done")
+							.setIcon("list-checks")
+							.onClick(() => this.toggleTasksInFile(file, true));
+					});
+
+					// Feature: Change Complete -> Incomplete
+					menu.addItem((item) => {
+						item.setTitle("Done -> Todo")
+							.setIcon("layout-list")
+							.onClick(() => this.toggleTasksInFile(file, false));
+					});
+
+					// Feature: Count todo
+					menu.addItem((item) => {
+						item.setTitle("TODO Summary")
+							.setIcon("info")
+							.onClick(() => this.showTodoCounts(file));
+					});
 				}
-			}
-		});
-
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
-
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			console.log('click', evt);
-		});
-
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
+			})
+		);
 	}
 
-	onunload() {
+	async toggleTasksInFile(file: TFile, toComplete: boolean) {
+		const content = await this.app.vault.read(file);
 
+		let count = 0;
+		let updatedContent = content;
+
+		if (toComplete) {
+			// Incomplete -> Complete
+			updatedContent = content.replace(/- \[ \]/g, () => {
+				count++;
+				return "- [x]";
+			});
+		} else {
+			// Complete -> Incomplete
+			if (this.settings.removeCompletedDate) {
+				updatedContent = this.removeCompletedDate(content);
+				count = (content.match(/- \[x\]/g) || []).length;
+			} else {
+				updatedContent = content.replace(/- \[x\]/g, () => {
+					count++;
+					return "- [ ]";
+				});
+			}
+		}
+
+		if (content !== updatedContent) {
+			await this.app.vault.modify(file, updatedContent);
+			const status = toComplete ? "completed" : "incomplete";
+			new Notice(
+				`All tasks in "${file.name}" marked as ${status}! Total tasks changed: ${count}.`
+			);
+		} else {
+			new Notice(`No tasks to update in "${file.name}".`);
+		}
+	}
+
+	async toggleTasksInCurrentFile(toComplete: boolean) {
+
+		const activeFile = this.app.workspace.getActiveFile();
+
+		if (!activeFile) {
+			new Notice("No file is currently active");
+			return;
+		}
+
+		this.toggleTasksInFile(activeFile, toComplete);
+
+	}
+
+	private removeCompletedDate(content: string): string {
+		// First, replace "- [x]" with "- [ ]"
+		let updatedContent = content.replace(/- \[x\]/g, "- [ ]");
+
+		// Then, remove any "✅ YYYY-MM-DD" preceded by whitespace
+		updatedContent = updatedContent.replace(/ ?✅ \d{4}-\d{2}-\d{2}/g, "");
+
+		return updatedContent;
+	}
+
+	async showTodoCounts(file: TFile) {
+		const content = await this.app.vault.read(file);
+
+		// Count TODO with regex
+		const totalTodos = (content.match(/- \[ \] |- \[x\] /g) || []).length;
+		const incompleteTodos = (content.match(/- \[ \] /g) || []).length;
+		const completeTodos = (content.match(/- \[x\] /g) || []).length;
+
+		// Show Modal instead of Notice
+		new TodoCountsModal(
+			this.app,
+			file,
+			totalTodos,
+			incompleteTodos,
+			completeTodos
+		).open();
+	}
+
+	async showTodoCountsInCurrentFile() {
+		const activeFile = this.app.workspace.getActiveFile();
+
+		if (!activeFile) {
+			new Notice("No file is currently active");
+			return;
+		}
+
+		const content = await this.app.vault.read(activeFile);
+
+		// Count TODO with regex
+		const totalTodos = (content.match(/- \[ \] |- \[x\] /g) || []).length;
+		const incompleteTodos = (content.match(/- \[ \] /g) || []).length;
+		const completeTodos = (content.match(/- \[x\] /g) || []).length;
+
+		// Show Modal instead of Notice
+		new TodoCountsModal(
+			this.app,
+			activeFile,
+			totalTodos,
+			incompleteTodos,
+			completeTodos
+		).open();
+	}
+
+	async markAllTasksInCurrentFile(markAsDone: boolean) {
+		// get current active file
+		const activeFile = this.app.workspace.getActiveFile();
+
+		if (!activeFile) {
+			new Notice("No file is currently active");
+			return;
+		}
+
+		const content = await this.app.vault.read(activeFile);
+		let count = 0;
+		let updatedContent = content;
+
+		if (markAsDone) {
+			// todo -> done
+			count = (content.match(/- \[ \] /g) || []).length;
+			updatedContent = content.replace(/- \[ \] /g, "- [x] ");
+		} else {
+			// done -> todo
+			if (this.settings.removeCompletedDate) {
+				// if exist tasks plugin date
+				const lines = content.split("\n");
+				const processedLines = lines.map((line) => {
+					if (line.includes("- [x]")) {
+						return line
+							.replace(/- \[x\](.*?)\s+✅.*$/, "- [ ] $1")
+							.trim();
+					}
+					return line;
+				});
+				updatedContent = processedLines.join("\n");
+				count = (content.match(/- \[x\] /g) || []).length;
+			} else {
+				// change status
+				count = (content.match(/- \[x\] /g) || []).length;
+				updatedContent = content.replace(/- \[x\] /g, "- [ ] ");
+			}
+		}
+
+		if (content !== updatedContent) {
+			await this.app.vault.modify(activeFile, updatedContent);
+			const status = markAsDone ? "done" : "not done";
+			new Notice(
+				`All tasks in "${activeFile.name}" marked as ${status}! Total tasks changed: ${count}`
+			);
+		} else {
+			new Notice(`No tasks to update in "${activeFile.name}"`);
+		}
 	}
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		this.settings = Object.assign(
+			{},
+			DEFAULT_SETTINGS,
+			await this.loadData()
+		);
 	}
 
 	async saveSettings() {
 		await this.saveData(this.settings);
 	}
-}
 
-class SampleModal extends Modal {
-	constructor(app: App) {
-		super(app);
-	}
-
-	onOpen() {
-		const {contentEl} = this;
-		contentEl.setText('Woah!');
-	}
-
-	onClose() {
-		const {contentEl} = this;
-		contentEl.empty();
+	onunload() {
+		console.log("Batch Task Toggle plugin unloaded");
 	}
 }
 
-class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+class BatchTaskTogglePluginSettingsTab extends PluginSettingTab {
+	plugin: BatchTaskTogglePlugin;
 
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: BatchTaskTogglePlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
 
 	display(): void {
-		const {containerEl} = this;
-
+		const { containerEl } = this;
 		containerEl.empty();
 
 		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
-			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue(this.plugin.settings.mySetting)
-				.onChange(async (value) => {
-					this.plugin.settings.mySetting = value;
-					await this.plugin.saveSettings();
-				}));
+			.setName("Remove Completed Date")
+			.setDesc(
+				"Remove the date(for Task plugin: ✅ 2024-11-04) from completed tasks when toggled. "
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.removeCompletedDate)
+					.onChange(async (value) => {
+						this.plugin.settings.removeCompletedDate = value;
+						await this.plugin.saveSettings();
+					})
+			);
+	}
+}
+
+class TodoCountsModal extends Modal {
+	private file: TFile;
+	private totalTodos: number;
+	private incompleteTodos: number;
+	private completeTodos: number;
+
+	constructor(
+		app: App,
+		file: TFile,
+		totalTodos: number,
+		incompleteTodos: number,
+		completeTodos: number
+	) {
+		super(app);
+		this.file = file;
+		this.totalTodos = totalTodos;
+		this.incompleteTodos = incompleteTodos;
+		this.completeTodos = completeTodos;
+	}
+
+	onOpen() {
+		const { contentEl } = this;
+
+		// add title
+		contentEl.createEl("h2", { text: "Page Task Statistics" });
+
+		// file name
+		contentEl.createEl("p", {
+			text: `File: ${this.file.name}`,
+			cls: "todo-stats-filename",
+		});
+
+		// add table
+		const table = contentEl.createEl("table", { cls: "todo-stats-table" });
+
+		// add style
+		contentEl.addClass("todo-stats-modal");
+		contentEl.createEl("style", {
+			text: `
+                .todo-stats-modal {
+                    padding: 1em;
+                }
+                .todo-stats-filename {
+                    color: var(--text-muted);
+                    margin-bottom: 1em;
+                }
+                .todo-stats-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+                .todo-stats-table td {
+                    padding: 8px;
+                    border: 1px solid var(--background-modifier-border);
+                }
+                .todo-stats-table td:first-child {
+                    font-weight: bold;
+                    background-color: var(--background-modifier-hover);
+                }
+                .todo-stats-table td:last-child {
+                    text-align: right;
+                }
+                .completion-rate {
+                    color: var(--text-accent);
+                    font-weight: bold;
+                    margin-top: 1em;
+                }
+            `,
+		});
+
+		// add data in table
+		this.addTableRow(table, "Total Tasks", this.totalTodos);
+		this.addTableRow(table, "Completed", this.completeTodos);
+		this.addTableRow(table, "Incomplete", this.incompleteTodos);
+
+		// precentage
+		const completionRate =
+			this.totalTodos > 0
+				? ((this.completeTodos / this.totalTodos) * 100).toFixed(1)
+				: 0;
+
+		contentEl.createEl("p", {
+			text: `Completion Rate: ${completionRate}%`,
+			cls: "completion-rate",
+		});
+	}
+
+	private addTableRow(table: HTMLTableElement, label: string, value: number) {
+		const row = table.createEl("tr");
+		row.createEl("td", { text: label });
+		row.createEl("td", { text: value.toString() });
+	}
+
+	onClose() {
+		const { contentEl } = this;
+		contentEl.empty();
 	}
 }

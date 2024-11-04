@@ -1,11 +1,12 @@
 {
-	"id": "sample-plugin",
-	"name": "Sample Plugin",
-	"version": "1.0.0",
+	"id": "obsidian-task-director",
+	"name": "Task Director",
+	"version": "0.0.1",
 	"minAppVersion": "0.15.0",
-	"description": "Demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
+	"description": "Manage and Change Tasks Targeting a Specific Page",
+	"author": "cybertramp",
+	"authorUrl": "https://cybertramp.net",
+	"helpUrl": "https://github.com/cybertramp/obsidian-task-director",
+	"fundingUrl": "https://www.buymeacoffee.com/cybertramp",
 	"isDesktopOnly": false
 }
