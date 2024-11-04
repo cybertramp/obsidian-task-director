@@ -1,5 +1,5 @@
 {
-	"name": "obsidian-task-director",
+	"name": "task-director",
 	"version": "0.0.1",
 	"description": "Manage and Change Tasks Targeting a Specific Page",
 	"main": "main.js",
