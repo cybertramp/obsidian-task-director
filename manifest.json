@@ -3,7 +3,7 @@
 	"name": "Task Director",
 	"version": "0.0.1",
 	"minAppVersion": "0.15.0",
-	"description": "Manage and Change Tasks Targeting a Specific Page",
+	"description": "Manage and change tasks targeting a specific page",
 	"author": "cybertramp",
 	"authorUrl": "https://cybertramp.net",
 	"helpUrl": "https://github.com/cybertramp/obsidian-task-director",

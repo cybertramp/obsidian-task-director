@@ -69,7 +69,7 @@ export default class BatchTaskTogglePlugin extends Plugin {
 
 					// Feature: Count todo
 					menu.addItem((item) => {
-						item.setTitle("TODO Summary")
+						item.setTitle("Todo summary")
 							.setIcon("info")
 							.onClick(() => this.showTodoCounts(file));
 					});
@@ -260,7 +260,7 @@ class BatchTaskTogglePluginSettingsTab extends PluginSettingTab {
 		containerEl.empty();
 
 		new Setting(containerEl)
-			.setName("Remove Completed Date")
+			.setName("Remove completed date")
 			.setDesc(
 				"Remove the date(for Task plugin: ✅ 2024-11-04) from completed tasks when toggled. "
 			)
@@ -299,7 +299,7 @@ class TodoCountsModal extends Modal {
 		const { contentEl } = this;
 
 		// add title
-		contentEl.createEl("h2", { text: "Page Task Statistics" });
+		contentEl.createEl("h2", { text: "Page task statistics" });
 
 		// file name
 		contentEl.createEl("p", {
@@ -314,7 +314,7 @@ class TodoCountsModal extends Modal {
 		contentEl.addClass("todo-stats-modal");
 
 		// add data in table
-		this.addTableRow(table, "Total Tasks", this.totalTodos);
+		this.addTableRow(table, "Total tasks", this.totalTodos);
 		this.addTableRow(table, "Completed", this.completeTodos);
 		this.addTableRow(table, "Incomplete", this.incompleteTodos);
 
@@ -325,7 +325,7 @@ class TodoCountsModal extends Modal {
 				: 0;
 
 		contentEl.createEl("p", {
-			text: `Completion Rate: ${completionRate}%`,
+			text: `Completion rate: ${completionRate}%`,
 			cls: "completion-rate",
 		});
 	}
