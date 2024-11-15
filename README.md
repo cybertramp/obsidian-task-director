@@ -1,4 +1,4 @@
-# Obsidian Task Director
+# Obsidian Community Plugin - Task Director
 
 Change all tasks within the selected page at once.
 
