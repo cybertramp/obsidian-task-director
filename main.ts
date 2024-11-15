@@ -32,21 +32,57 @@ export default class BatchTaskTogglePlugin extends Plugin {
 		this.addCommand({
 			id: "change-to-done",
 			name: "Change tasks to done",
-			callback: () => this.toggleTasksInCurrentFile(true),
+			checkCallback: (checking: boolean) => {
+				const activeFile = this.app.workspace.getActiveFile();
+				if (!activeFile) {
+					new Notice("No file is currently active");
+					return false;
+				}
+
+				if (!checking) {
+					this.toggleTasksInFile(activeFile, true);
+				}
+
+				return true;
+			},
 		});
 
 		// add command
 		this.addCommand({
 			id: "change-to-not-done",
 			name: "Change tasks to todo",
-			callback: () => this.toggleTasksInCurrentFile(false),
+			checkCallback: (checking: boolean) => {
+				const activeFile = this.app.workspace.getActiveFile();
+				if (!activeFile) {
+					new Notice("No file is currently active");
+					return false;
+				}
+
+				if (!checking) {
+					this.toggleTasksInFile(activeFile, false);
+				}
+
+				return true;
+			},
 		});
 
 		// add command
 		this.addCommand({
 			id: "show-todo-summary",
 			name: "Show page todo summary",
-			callback: () => this.showTodoCountsInCurrentFile(),
+			checkCallback: (checking: boolean) => {
+				const activeFile = this.app.workspace.getActiveFile();
+				if (!activeFile) {
+					new Notice("No file is currently active");
+					return false;
+				}
+
+				if (!checking) {
+					this.showTodoCountsInCurrentFile(activeFile);
+				}
+
+				return true;
+			},
 		});
 
 		// add right click menu command
@@ -104,7 +140,10 @@ export default class BatchTaskTogglePlugin extends Plugin {
 		}
 
 		if (content !== updatedContent) {
-			await this.app.vault.modify(file, updatedContent);
+			await this.app.vault.process(file, (data) => {
+				return updatedContent;
+			});
+
 			const status = toComplete ? "completed" : "incomplete";
 			new Notice(
 				`All tasks in "${file.name}" marked as ${status}! Total tasks changed: ${count}.`
@@ -112,19 +151,6 @@ export default class BatchTaskTogglePlugin extends Plugin {
 		} else {
 			new Notice(`No tasks to update in "${file.name}".`);
 		}
-	}
-
-	async toggleTasksInCurrentFile(toComplete: boolean) {
-
-		const activeFile = this.app.workspace.getActiveFile();
-
-		if (!activeFile) {
-			new Notice("No file is currently active");
-			return;
-		}
-
-		this.toggleTasksInFile(activeFile, toComplete);
-
 	}
 
 	private removeCompletedDate(content: string): string {
@@ -155,15 +181,9 @@ export default class BatchTaskTogglePlugin extends Plugin {
 		).open();
 	}
 
-	async showTodoCountsInCurrentFile() {
-		const activeFile = this.app.workspace.getActiveFile();
+	async showTodoCountsInCurrentFile(file: TFile) {
 
-		if (!activeFile) {
-			new Notice("No file is currently active");
-			return;
-		}
-
-		const content = await this.app.vault.read(activeFile);
+		const content = await this.app.vault.read(file);
 
 		// Count TODO with regex
 		const totalTodos = (content.match(/- \[ \] |- \[x\] /g) || []).length;
@@ -173,7 +193,7 @@ export default class BatchTaskTogglePlugin extends Plugin {
 		// Show Modal instead of Notice
 		new TodoCountsModal(
 			this.app,
-			activeFile,
+			file,
 			totalTodos,
 			incompleteTodos,
 			completeTodos
